@@ -10,6 +10,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 import logging 
 
+from rest_framework.permissions import IsAuthenticated 
+
+from .permissions import IsAdmin, IsManager, IsEmployee 
+
 logger = logging.getLogger(__name__) 
  
 
@@ -19,6 +23,8 @@ class UserViewSet(ModelViewSet):
 
     serializer_class = UserSerializer 
 
+    permission_classes = [IsAdmin] 
+
  
 
 class ProjectViewSet(ModelViewSet): 
@@ -26,6 +32,8 @@ class ProjectViewSet(ModelViewSet):
     queryset = Project.objects.all() 
 
     serializer_class = ProjectSerializer 
+
+    permission_classes = [IsManager] 
 
  
 
@@ -50,6 +58,8 @@ class TaskViewSet(ModelViewSet):
     queryset = Task.objects.all() 
 
     serializer_class = TaskSerializer 
+
+    permission_classes = [IsEmployee] 
     
     # filter_backends = [DjangoFilterBackend, SearchFilter] 
 
