@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from database import SessionLocal
+from quiz.database import SessionLocal
 from .models import Quiz
 
 

@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
-from database import *
+from quiz.database import Base
+
 
 class Quiz(Base):
     __tablename__ = "quizzes"
@@ -9,6 +10,7 @@ class Quiz(Base):
     title = Column(String(255), nullable=False)
 
     questions = relationship("Question", back_populates="quiz")
+
 
 class Question(Base):
     __tablename__ = "questions"
