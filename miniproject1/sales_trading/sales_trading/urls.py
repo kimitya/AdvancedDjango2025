@@ -17,9 +17,22 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+from django.conf import settings
+from django.conf.urls.static import static
+
+
 urlpatterns = [
     path("admin/", admin.site.urls),
+
     path('api/users/', include('users.urls')),
     path('api/auth/', include('djoser.urls')),
     path('api/auth/', include('djoser.urls.jwt')),
+
+    path('api/', include('products.urls')),
+
+    path('api/trading/', include('trading.urls')),
+
+    path('api/sales/', include('sales.urls')),
 ]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
