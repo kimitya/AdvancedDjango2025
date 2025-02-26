@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     "products",
     "trading",
     "sales",
+    "drf_yasg",
+    "rest_framework",
 
 ]
 
@@ -63,12 +65,23 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
 }
 
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('JWT',),
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),  # Увеличить время жизни токена
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+}
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",  # Подключение к локальному Redis
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
 }
 
 STATIC_URL = '/static/'

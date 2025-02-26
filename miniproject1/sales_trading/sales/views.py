@@ -101,9 +101,15 @@ class SalesOrderListCreateView(generics.ListCreateAPIView):
 #         return [IsCustomer | IsSalesRepresentative | IsAdmin]
 
 class SalesOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = SalesOrder.objects.all()
     serializer_class = SalesOrderSerializer
     # permission_classes = [IsOwner]
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated and user.role == "customer":
+            return SalesOrder.objects.filter(user=user)
+        elif user.is_authenticated and user.role == "sales":
+            return SalesOrder.objects.filter(product__user=user)
+        return SalesOrder.objects.none()
 
 
 

@@ -21,18 +21,31 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Sales and Trading API",
+        default_version="1.0.0",
+        description="API for managing sales and trading of products",
+    ),
+    public=True,
+    # url="http://127.0.0.1:8000/api",
+)
+
 urlpatterns = [
     path("admin/", admin.site.urls),
 
     path('api/users/', include('users.urls')),
-    path('api/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),  # Логин (JWT)
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
 
     path('api/', include('products.urls')),
 
     path('api/trading/', include('trading.urls')),
 
     path('api/sales/', include('sales.urls')),
+    path('api/swagger/schema/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger-schema'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
