@@ -4,16 +4,35 @@ from rest_framework.views import APIView
 from django.utils.timezone import now
 from .models import Order, Transaction
 from .serializers import OrderSerializer, TransactionSerializer
+from users.permissions import *
+from rest_condition import Or
+
 
 class OrderListCreateView(generics.ListCreateAPIView):
     serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [IsTrader]
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user)  # Фильтруем заказы только текущего пользователя
+        return Order.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    # def get_permissions(self):
+    #     if self.request.method == 'GET':
+    #         return [permissions.AllowAny()]
+    #     return [IsTrader() | IsAdmin()]
+    # def get_permissions(self):
+    #     self.permission_classes = [permissions.AllowAny]
+    #     if self.request.method == 'POST':
+    #         self.permission_classes = [Or(IsAdmin, IsTrader),]
+    #     super().get_permissions()
+    @property
+    def permission_classes(self):
+        if self.request.method == 'GET':
+            return [permissions.AllowAny]
+        return [IsTrader | IsAdmin]
+
 
 class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = OrderSerializer
@@ -22,14 +41,20 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user)
 
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return [IsOwner()]
+
 class ExecuteOrderView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsOwner]
+    # permission_classes = [IsTrader]
 
     def post(self, request, pk):
         try:
             order = Order.objects.get(id=pk, user=request.user, status='pending')
-            executed_price = order.price  # В реальной системе можно менять цену в зависимости от рынка
-            transaction = Transaction.objects.create(order=order, executed_price=executed_price, executed_at=now())
+            executed_price = order.price
+            transaction = Transaction.objects.create(order=order, executed_price=executed_price, executed_at=now(), user=request.user)
 
             order.status = 'completed'
             order.save()
@@ -42,13 +67,9 @@ class ExecuteOrderView(APIView):
 
 class TransactionListView(generics.ListAPIView):
     serializer_class = TransactionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsOwner]
 
     def get_queryset(self):
-        """
-        Возвращает список всех транзакций пользователя.
-        Можно фильтровать по параметрам ?product=1 или ?date=YYYY-MM-DD.
-        """
         queryset = Transaction.objects.filter(order__user=self.request.user)
         product_id = self.request.query_params.get('product')
         date = self.request.query_params.get('date')
@@ -60,10 +81,26 @@ class TransactionListView(generics.ListAPIView):
 
         return queryset
 
+
 class TransactionDetailView(generics.RetrieveAPIView):
     serializer_class = TransactionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsOwner]
 
     def get_queryset(self):
         return Transaction.objects.filter(order__user=self.request.user)
+
+class MyOrderListView(generics.ListAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user)
+
+# class MyTransactionListView(generics.ListAPIView):
+#     serializer_class = TransactionSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+#
+#     def get_queryset(self):
+#         return Transaction.objects.filter(order__user=self.request.user)
+
 

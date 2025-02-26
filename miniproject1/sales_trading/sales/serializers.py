@@ -8,6 +8,7 @@ class SalesOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = SalesOrder
         fields = ('id', 'user', 'product', 'product_name', 'quantity', 'total_price', 'status', 'created_at', 'updated_at')
+        extra_kwargs = {'total_price': {'required': False}}
 
 class InvoiceSerializer(serializers.ModelSerializer):
     order_details = SalesOrderSerializer(source='order', read_only=True)

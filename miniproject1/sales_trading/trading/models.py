@@ -27,6 +27,7 @@ class Order(models.Model):
         return f"{self.user} - {self.order_type} {self.quantity} {self.product.name} at {self.price}"
 
 class Transaction(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='transactions')
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='transaction')
     executed_price = models.DecimalField(max_digits=10, decimal_places=2)
     executed_at = models.DateTimeField(auto_now_add=True)

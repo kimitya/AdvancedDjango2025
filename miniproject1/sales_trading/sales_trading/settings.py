@@ -78,6 +78,14 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# DJOSER = {
+#     "USER_CREATE_PASSWORD_RETYPE": True,
+#     "SERIALIZERS": {
+#         "user_create": "sales_trading.users.serializers.CustomUserCreateSerializer",
+#         "current_user": "sales_trading.users.serializers.UserProfileSerializer",
+#     },
+# }
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",

@@ -7,11 +7,13 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProductSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(read_only=True)  # Читаемая категория
+    # user = serializers.ReadOnlyField(source='user.username')
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    category = CategorySerializer(read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(), source='category', write_only=True
     )
 
     class Meta:
         model = Product
-        fields = ('id', 'name', 'description', 'price', 'category', 'category_id', 'image', 'stock', 'created_at', 'updated_at')
+        fields = ('id', 'name', 'description', 'price', 'category', 'category_id', 'image', 'stock', 'created_at', 'updated_at', 'user')
