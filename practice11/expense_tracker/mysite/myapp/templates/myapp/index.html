@@ -1,0 +1,133 @@
+{% extends 'myapp/base.html' %}
+{% load static %}
+{% block body %}
+    <p>Привет, {{ user.username }} | <a href="{% url 'account_logout' %}">Выход</a></p>
+
+    <h1>Expense Tracker</h1>
+
+    <form class="shadow-lg m-10 rounded-lg" method="post">
+        {% csrf_token %}
+        <div class="form-container px-10 py-10 flex">
+            <div class="mx-10">
+                <div class="mb-5">
+                    <label>New Category</label>
+                </div>
+                <div class="border">
+                    <input type="text" name="category_name" class="w-full" required>
+                </div>    
+            </div>
+            <div class="mx-10 mt-8">
+                <button type="submit" name="add_category" class="bg-blue-500 px-5 py-2 rounded-lg text-white font-semibold">Add Category</button>
+            </div>
+        </div>
+    </form>
+
+    <form class="shadow-lg m-10 rounded-lg" method="post">
+        {% csrf_token %}
+        <div class="form-container px-10 py-10 flex">
+            <div class="mx-10">
+                <div class="mb-5">
+                    <label>Expense name</label>
+                </div>
+                <div class="border">
+                    {{ expense_form.name }}
+                </div>    
+            </div>
+            <div class="mx-10">
+                <div class="mb-5">
+                    <label>Expense amount</label>
+                </div>
+                <div class="border">
+                    {{ expense_form.amount }}
+                </div>    
+            </div>
+            <div class="mx-10">
+                <div class="mb-5">
+                    <label>Expense category</label>
+                </div>
+                <div class="border">
+                    {{ expense_form.category }}
+                </div>    
+            </div>
+            <div class="mx-10 mt-8">
+                <button type="submit" name="add_expense" class="bg-green-500 px-5 py-2 rounded-lg text-white font-semibold">Add</button>
+            </div>
+        </div>
+    </form>
+
+    <form class="shadow-lg m-10 rounded-lg" method="get">
+        <div class="form-container px-10 py-10 flex">
+            <div class="mx-10">
+                <div class="mb-5">
+                    <label>Date From</label>
+                </div>
+                <div class="border">
+                    {{ filter.form.date__gte }}
+                </div>
+            </div>
+            <div class="mx-10">
+                <div class="mb-5">
+                    <label>Date To</label>
+                </div>
+                <div class="border">
+                    {{ filter.form.date__lte }}
+                </div>
+            </div>
+            <div class="mx-10">
+                <div class="mb-5">
+                    <label>Category</label>
+                </div>
+                <div class="border">
+                    {{ filter.form.category }}
+                </div>
+            </div>
+            <div class="mx-10 mt-8">
+                <button type="submit" class="bg-blue-500 px-5 py-2 rounded-lg text-white font-semibold">Filter</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="m-10">
+        <a href="{% url 'group_expense_list' %}" class="text-blue-500 hover:underline">View Group Expenses</a>
+    </div>
+
+    <div>Expenses table</div>
+    <div class="shadow-lg m-10 rounded-lg">
+        <div class="expense-header flex flex-wrap space-x-40">
+            <span>Name</span>
+            <span>Amount</span>
+            <span>Category</span>
+            <span>Date</span>
+            <span>Edit</span>
+            <span>Delete</span>
+        </div>
+        <hr class="m-10">
+        {% for expense in expenses %}
+        <div class="expense-row flex-wrap px-20 py-5">
+            <span class="font-bold">{{ expense.name }}</span>
+            <span class="font-bold">{{ expense.amount }}</span>
+            <span class="font-bold">{{ expense.category|default:"No category" }}</span>
+            <span class="font-bold">{{ expense.date }}</span>
+            <span class="pl-24"><a href="{% url 'edit' expense.id %}">
+                <img class="h-7" src="{% static 'myapp/images/edit.png' %}" alt="Edit">
+            </a></span>
+            <span class="pl-22">
+                <form method="post" action="{% url 'delete' expense.id %}">
+                    {% csrf_token %}
+                    <button type="submit" name="delete">
+                        <img class="h-7" src="{% static 'myapp/images/delete.png' %}" alt="Delete">
+                    </button>
+                </form>
+            </span>
+        </div>
+        {% empty %}
+        <div class="px-20 py-5">
+            <span>No expenses found.</span>
+        </div>
+        {% endfor %}
+        <div class="px-72 py-5">
+            <span class="font-bold text-green-500">Total: {{ total_expenses.amount__sum|default:0 }}</span>
+        </div>
+    </div>
+
+{% endblock %}

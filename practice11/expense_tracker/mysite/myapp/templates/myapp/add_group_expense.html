@@ -1,0 +1,50 @@
+{% extends 'myapp/base.html' %}
+{% load static %}
+
+{% block body %}
+    <h1 class="m-10 text-xl font-bold">Add Group Expense</h1>
+
+    <form method="post" class="shadow-lg m-10 rounded-lg">
+        {% csrf_token %}
+        <div class="flex px-10 py-10">
+            <div class="mx-10">
+                <div class="mb-5">
+                    <label class="font-semibold">Expense Name</label>
+                </div>
+                <div class="border p-1">
+                    <input type="text" name="name" class="w-full" required>
+                </div>
+            </div>
+
+            <div class="mx-10">
+                <div class="mb-5">
+                    <label class="font-semibold">Amount</label>
+                </div>
+                <div class="border p-1">
+                    <input type="number" step="0.01" name="amount" class="w-full" required>
+                </div>
+            </div>
+
+            <div class="mx-10">
+                <div class="mb-5">
+                    <label class="font-semibold">Users</label>
+                </div>
+                <div class="border p-1">
+                    <select name="users" multiple class="w-full" required>
+                        {% for user in users %}
+                            <option value="{{ user.id }}">{{ user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="mx-10 mt-10">
+                <button name="add_group_expense" class="bg-green-500 px-5 py-2 text-white font-bold rounded-lg" type="submit">Add Group Expense</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="m-10">
+        <a href="{% url 'group_expense_list' %}" class="text-blue-500 hover:underline">View Group Expenses</a>
+    </div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'myapp/base.html' %}
+{% load static %}
+
+{% block body %}
+    <h1 class="m-10 text-xl font-bold">Group Expenses</h1>
+
+    <div class="shadow-lg m-10 rounded-lg">
+        <div class="expense-header flex flex-wrap space-x-40 px-20 py-5">
+            <span class="font-bold">Name</span>
+            <span class="font-bold">Amount</span>
+            <span class="font-bold">Date</span>
+            <span class="font-bold">Users</span>
+            <span class="font-bold">Your Share</span>
+        </div>
+        <hr class="m-10">
+        {% for expense in expenses %}
+        <div class="expense-row flex-wrap px-20 py-5">
+            <span>{{ expense.name }}</span>
+            <span>{{ expense.amount }}</span>
+            <span>{{ expense.date }}</span>
+            <span>{{ expense.users.all|join:", " }}</span>
+            <span class="text-green-500">{{ expense.split_expense }}</span>
+        </div>
+        {% empty %}
+        <div class="px-20 py-5">
+            <span>No group expenses found.</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="m-10">
+        <a href="{% url 'add_group_expense' %}" class="text-blue-500 hover:underline">Add New Group Expense</a>
+        <span class="mx-5">|</span>
+        <a href="{% url 'index' %}" class="text-blue-500 hover:underline">Back to Personal Expenses</a>
+    </div>
+{% endblock %}
