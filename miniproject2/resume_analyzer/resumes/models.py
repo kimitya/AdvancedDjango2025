@@ -1,5 +1,6 @@
 
 from django.db import models
+from mongoengine import Document, fields
 from users.models import CustomUser
 import json
 
@@ -26,6 +27,20 @@ class Resume(models.Model):
     def __str__(self):
         return f"{self.user.username}'s resume"
 
+class MongoResume(Document):
+    user_id = fields.IntField(required=True)
+    file = fields.StringField(required=True)
+    uploaded_at = fields.DateTimeField(default=lambda: timezone.now())
+    skills = fields.StringField(default='')
+    experience = fields.StringField(default='')
+    education = fields.StringField(default='')
+    rating = fields.FloatField(default=0.0)
+    feedback = fields.DictField(default={})
+
+    meta = {
+        'collection': 'resumes'
+    }
+
 class JobDescription(models.Model):
     recruiter = models.ForeignKey(CustomUser, on_delete=models.CASCADE, limit_choices_to={'role': 'recruiter'})
     description = models.TextField()
@@ -37,7 +52,7 @@ class JobDescription(models.Model):
         return f"Job by {self.recruiter.username} - {self.created_at}"
 
 class Log(models.Model):
-    user_id = models.IntegerField()  # Заменяем ForeignKey на IntegerField
+    user_id = models.IntegerField()
     action = models.CharField(max_length=255)
     timestamp = models.DateTimeField(auto_now_add=True)
     details = models.TextField(blank=True)

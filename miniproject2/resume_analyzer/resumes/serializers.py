@@ -1,38 +1,26 @@
-
-
-# # resumes/serializers.py
-# from rest_framework import serializers
-# from .models import Resume
-#
-# class ResumeSerializer(serializers.ModelSerializer):
-#     feedback = serializers.SerializerMethodField()
-#
-#     class Meta:
-#         model = Resume
-#         fields = ['id', 'file', 'uploaded_at', 'skills', 'experience', 'education',
-#                   'rating', 'recommendations', 'feedback']
-#         read_only_fields = ['uploaded_at', 'skills', 'experience', 'education',
-#                           'rating', 'recommendations', 'feedback']
-#
-#     def get_feedback(self, obj):
-#         return obj.get_feedback()
-
-# resumes/serializers.py
 from rest_framework import serializers
 from .models import Resume, JobDescription
+class ResumeSerializer(serializers.Serializer):
+    id = serializers.CharField(source='id.__str__', read_only=True)
+    file = serializers.CharField(read_only=True)
+    uploaded_at = serializers.DateTimeField(read_only=True)
+    skills = serializers.CharField(read_only=True)
+    experience = serializers.CharField(read_only=True)
+    education = serializers.CharField(read_only=True)
+    rating = serializers.FloatField(read_only=True)
+    analysis = serializers.SerializerMethodField()
 
-class ResumeSerializer(serializers.ModelSerializer):
-    feedback = serializers.SerializerMethodField()
+    def get_analysis(self, obj):
+        return {
+            'skills': obj.skills,
+            'experience': obj.experience,
+            'education': obj.education,
+            'rating': float(obj.rating) if obj.rating is not None else 0.0,
+            'feedback': obj.feedback
+        }
 
-    class Meta:
-        model = Resume
-        fields = ['id', 'file', 'uploaded_at', 'skills', 'experience', 'education',
-                  'rating', 'recommendations', 'feedback']
-        read_only_fields = ['uploaded_at', 'skills', 'experience', 'education',
-                          'rating', 'recommendations', 'feedback']
-
-    def get_feedback(self, obj):
-        return obj.get_feedback()
+    def create(self, validated_data):
+        return validated_data
 
 class JobDescriptionSerializer(serializers.ModelSerializer):
     class Meta:
