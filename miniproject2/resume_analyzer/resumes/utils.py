@@ -4,6 +4,7 @@ import docx
 import spacy
 import re
 
+from pydantic import BaseModel
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from django.core.files import File
@@ -52,150 +53,229 @@ def extract_text_from_docx(file_path):
         print(f"DOCX extraction error: {e}")
         return ""
 
-def process_resume(file_path):
-    print(f"Processing file: {file_path}")
+# def process_resume(file_path):
+#     print(f"Processing file: {file_path}")
+#
+#     if file_path.endswith('.pdf'):
+#         text = extract_text_from_pdf(file_path)
+#     elif file_path.endswith('.docx'):
+#         text = extract_text_from_docx(file_path)
+#     else:
+#         raise ValueError("Unsupported file format")
+#
+#     if not text:
+#         print("No text extracted from file")
+#         return ResumeAnalysis(
+#             skills="",
+#             experience="0 years",
+#             education="",
+#             rating=0.0,
+#             recommendations="Unable to extract text from resume",
+#             feedback=Feedback()
+#         ).dict()
+#
+#     doc = nlp(text)
+#     text_lower = text.lower()
+#     print(f"Processed text: {text_lower[:100]}...")
+#
+#     skills_keywords = [
+#         'python', 'java', 'javascript', 'sql', 'html', 'css', 'react', 'django',
+#         'communication', 'teamwork', 'leadership', 'management', 'excel', 'aws',
+#         'docker', 'git', 'linux', 'agile', 'scrum', 'typescript', 'kubernetes',
+#         'cloud', 'machine learning', 'problem-solving', 'adaptability', 'collaboration'
+#     ]
+#     skills = set()
+#     for token in doc:
+#         if token.text.lower() in skills_keywords:
+#             skills.add(token.text.lower())
+#     for chunk in doc.noun_chunks:
+#         if chunk.text.lower() in skills_keywords:
+#             skills.add(chunk.text.lower())
+#     print(f"Extracted skills: {skills}")
+#
+#     experience_years = 0
+#     experience_pattern = r'(\d+)\s*(?:year|yr|month|experience)'
+#     experience_matches = re.findall(experience_pattern, text_lower)
+#     for match in experience_matches:
+#         if match.isdigit():
+#             num = int(match)
+#             if num < 12 and 'month' in text_lower:
+#                 experience_years += num / 12
+#             else:
+#                 experience_years += num
+#     for ent in doc.ents:
+#         if ent.label_ == "DATE":
+#             if re.match(r'\d{4}\s*[-–—]\s*\d{4}', ent.text):
+#                 start, end = map(int, re.findall(r'\d{4}', ent.text))
+#                 experience_years += end - start
+#             elif re.match(r'\d{4}\s*[-–—]\s*present', ent.text.lower()):
+#                 start = int(re.search(r'\d{4}', ent.text).group())
+#                 experience_years += 2025 - start
+#     experience = f"{experience_years:.1f} years"
+#     print(f"Calculated experience: {experience}")
+#
+#     education = set()
+#     education_keywords = [
+#         'bachelor', 'master', 'phd', 'degree', 'university', 'college',
+#         'bs', 'ms', 'ba', 'mba'
+#     ]
+#     for ent in doc.ents:
+#         if ent.label_ in ["ORG", "DATE"] and any(kw in ent.text.lower() for kw in education_keywords):
+#             education.add(ent.text)
+#         elif ent.label_ == "DATE" and re.match(r'\d{4}\s*[-–—]\s*\d{4}', ent.text):
+#             education.add(ent.text)
+#     print(f"Extracted education: {education}")
+#
+#     skills_score = min(len(skills), 6) * 5
+#     if len(skills) > 6:
+#         skills_score += (len(skills) - 6) * 1
+#     skills_score = min(skills_score, 30)
+#
+#     experience_score = min(experience_years * 3, 20)
+#
+#     education_score = 0
+#     if any(kw in text_lower for kw in ['bachelor', 'bs', 'ba']):
+#         education_score += 10
+#     elif any(kw in text_lower for kw in ['master', 'ms', 'mba']):
+#         education_score += 15
+#     elif any(kw in text_lower for kw in ['phd']):
+#         education_score += 20
+#     if any(kw in text_lower for kw in ['university', 'college']):
+#         education_score += 5
+#     if re.search(r'\d{4}\s*[-–—]\s*\d{4}', text_lower):
+#         education_score += 5
+#     education_score = min(education_score, 20)
+#
+#     rating = skills_score + experience_score + education_score
+#     print(f"Calculated rating: {rating}")
+#
+#     feedback = Feedback(
+#         skill_gaps=[],
+#         formatting=[],
+#         ats_keywords=[]
+#     )
+#     missing_tech_skills = [skill for skill in TRENDING_SKILLS['tech'] if skill not in skills]
+#     missing_soft_skills = [skill for skill in TRENDING_SKILLS['soft'] if skill not in skills]
+#     if missing_tech_skills:
+#         feedback.skill_gaps.append(f"Missing trending technical skills: {', '.join(missing_tech_skills[:3])}")
+#     if missing_soft_skills:
+#         feedback.skill_gaps.append(f"Missing trending soft skills: {', '.join(missing_soft_skills[:2])}")
+#
+#     sentences = [sent.text.strip() for sent in doc.sents]
+#     if len(sentences) < 5:
+#         feedback.formatting.append("Add more detailed descriptions to expand your resume")
+#     if len(text.split('\n')) < 10:
+#         feedback.formatting.append("Use more sections (e.g., Projects, Certifications) for better structure")
+#     if not re.search(r'\b\d+\b', text):
+#         feedback.formatting.append("Include quantifiable achievements (e.g., 'improved performance by 20%')")
+#
+#     found_ats_keywords = [kw for kw in ATS_KEYWORDS if kw in text_lower]
+#     missing_ats_keywords = [kw for kw in ATS_KEYWORDS if kw not in text_lower]
+#     if len(found_ats_keywords) < len(ATS_KEYWORDS) * 0.5:
+#         feedback.ats_keywords.append(f"Add these ATS-friendly keywords: {', '.join(missing_ats_keywords[:3])}")
+#     print(f"Generated feedback: {feedback}")
+#
+#     recommendations = []
+#     if len(skills) < 4:
+#         recommendations.append("Consider adding more technical skills to stand out")
+#     if experience_years < 1:
+#         recommendations.append("Try to gain more professional experience or include relevant projects")
+#     if education_score < 15:
+#         recommendations.append("Enhance your education section with more details")
+#     if len(sentences) < 5:
+#         recommendations.append("Expand your resume with more detailed descriptions")
+#     recommendations_text = '\n'.join(recommendations) if recommendations else "Well-structured resume!"
+#     print(f"Recommendations: {recommendations_text}")
+#
+#     analysis = ResumeAnalysis(
+#         skills=', '.join(skills) if skills else "",
+#         experience=experience,
+#         education=', '.join(education) if education else "Not specified",
+#         rating=rating,
+#         recommendations=recommendations_text,
+#         feedback=feedback
+#     )
+#     print(f"Final analysis: {analysis.dict()}")
+#     return analysis.dict()
 
-    if file_path.endswith('.pdf'):
-        text = extract_text_from_pdf(file_path)
-    elif file_path.endswith('.docx'):
-        text = extract_text_from_docx(file_path)
+class ResumeAnalysis(BaseModel):
+    skills: str  # Ожидается строка, разделённая запятыми
+    experience: str
+    education: str
+    rating: float
+    feedback: dict
+
+def process_resume(file_path: str) -> dict:
+    # Извлечение текста из DOCX
+    doc = docx.Document(file_path)
+    full_text = '\n'.join([para.text for para in doc.paragraphs])
+    print(f"Extracted text from DOCX: {full_text[:100]}...")
+
+    # Обработка текста
+    processed_text = full_text.lower()
+    print(f"Processed text: {processed_text[:100]}...")
+
+    # Извлечение навыков
+    skills_section = re.search(r'skills\s*([\s\S]*?)(work experience|education|$)', processed_text, re.IGNORECASE)
+    if skills_section:
+        skills_text = skills_section.group(1).strip()
+        skills = {skill.strip() for skill in skills_text.split('\n') if skill.strip() and not skill.strip().startswith(('email', 'phone', 'name'))}
     else:
-        raise ValueError("Unsupported file format")
+        skills = set()
 
-    if not text:
-        print("No text extracted from file")
-        return ResumeAnalysis(
-            skills="",
-            experience="0 years",
-            education="",
-            rating=0.0,
-            recommendations="Unable to extract text from resume",
-            feedback=Feedback()
-        ).dict()
-
-    doc = nlp(text)
-    text_lower = text.lower()
-    print(f"Processed text: {text_lower[:100]}...")
-
-    skills_keywords = [
-        'python', 'java', 'javascript', 'sql', 'html', 'css', 'react', 'django',
-        'communication', 'teamwork', 'leadership', 'management', 'excel', 'aws',
-        'docker', 'git', 'linux', 'agile', 'scrum', 'typescript', 'kubernetes',
-        'cloud', 'machine learning', 'problem-solving', 'adaptability', 'collaboration'
-    ]
-    skills = set()
-    for token in doc:
-        if token.text.lower() in skills_keywords:
-            skills.add(token.text.lower())
-    for chunk in doc.noun_chunks:
-        if chunk.text.lower() in skills_keywords:
-            skills.add(chunk.text.lower())
+    # Если навыки не найдены, задаём значение по умолчанию
+    skills_str = ', '.join(skills) if skills else 'unknown'
     print(f"Extracted skills: {skills}")
 
-    experience_years = 0
-    experience_pattern = r'(\d+)\s*(?:year|yr|month|experience)'
-    experience_matches = re.findall(experience_pattern, text_lower)
-    for match in experience_matches:
-        if match.isdigit():
-            num = int(match)
-            if num < 12 and 'month' in text_lower:
-                experience_years += num / 12
-            else:
-                experience_years += num
-    for ent in doc.ents:
-        if ent.label_ == "DATE":
-            if re.match(r'\d{4}\s*[-–—]\s*\d{4}', ent.text):
-                start, end = map(int, re.findall(r'\d{4}', ent.text))
-                experience_years += end - start
-            elif re.match(r'\d{4}\s*[-–—]\s*present', ent.text.lower()):
-                start = int(re.search(r'\d{4}', ent.text).group())
-                experience_years += 2025 - start
-    experience = f"{experience_years:.1f} years"
-    print(f"Calculated experience: {experience}")
+    # Извлечение опыта
+    experience_section = re.search(r'(work experience|experience)\s*([\s\S]*?)(education|$)', processed_text, re.IGNORECASE)
+    experience_years = 0.0
+    if experience_section:
+        experience_text = experience_section.group(2)
+        years = re.findall(r'(\d{4})\s*[–-]\s*(\d{4}|present)', experience_text, re.IGNORECASE)
+        for start, end in years:
+            end_year = 2025 if end.lower() == 'present' else int(end)
+            experience_years += end_year - int(start)
+    experience_str = f"{experience_years:.1f} years"
+    print(f"Calculated experience: {experience_str}")
 
-    education = set()
-    education_keywords = [
-        'bachelor', 'master', 'phd', 'degree', 'university', 'college',
-        'bs', 'ms', 'ba', 'mba'
-    ]
-    for ent in doc.ents:
-        if ent.label_ in ["ORG", "DATE"] and any(kw in ent.text.lower() for kw in education_keywords):
-            education.add(ent.text)
-        elif ent.label_ == "DATE" and re.match(r'\d{4}\s*[-–—]\s*\d{4}', ent.text):
-            education.add(ent.text)
+    # Извлечение образования
+    education_section = re.search(r'education\s*([\s\S]*?)(languages|$)', processed_text, re.IGNORECASE)
+    education = education_section.group(1).strip() if education_section else 'Not specified'
     print(f"Extracted education: {education}")
 
-    skills_score = min(len(skills), 6) * 5
-    if len(skills) > 6:
-        skills_score += (len(skills) - 6) * 1
-    skills_score = min(skills_score, 30)
-
-    experience_score = min(experience_years * 3, 20)
-
-    education_score = 0
-    if any(kw in text_lower for kw in ['bachelor', 'bs', 'ba']):
-        education_score += 10
-    elif any(kw in text_lower for kw in ['master', 'ms', 'mba']):
-        education_score += 15
-    elif any(kw in text_lower for kw in ['phd']):
-        education_score += 20
-    if any(kw in text_lower for kw in ['university', 'college']):
-        education_score += 5
-    if re.search(r'\d{4}\s*[-–—]\s*\d{4}', text_lower):
-        education_score += 5
-    education_score = min(education_score, 20)
-
-    rating = skills_score + experience_score + education_score
+    # Рассчёт рейтинга
+    rating = 40 + (len(skills) * 5 if skills else 0) + (experience_years * 2)
+    rating = min(rating, 100)
     print(f"Calculated rating: {rating}")
 
-    feedback = Feedback(
-        skill_gaps=[],
-        formatting=[],
-        ats_keywords=[]
-    )
-    missing_tech_skills = [skill for skill in TRENDING_SKILLS['tech'] if skill not in skills]
-    missing_soft_skills = [skill for skill in TRENDING_SKILLS['soft'] if skill not in skills]
-    if missing_tech_skills:
-        feedback.skill_gaps.append(f"Missing trending technical skills: {', '.join(missing_tech_skills[:3])}")
-    if missing_soft_skills:
-        feedback.skill_gaps.append(f"Missing trending soft skills: {', '.join(missing_soft_skills[:2])}")
-
-    sentences = [sent.text.strip() for sent in doc.sents]
-    if len(sentences) < 5:
-        feedback.formatting.append("Add more detailed descriptions to expand your resume")
-    if len(text.split('\n')) < 10:
-        feedback.formatting.append("Use more sections (e.g., Projects, Certifications) for better structure")
-    if not re.search(r'\b\d+\b', text):
-        feedback.formatting.append("Include quantifiable achievements (e.g., 'improved performance by 20%')")
-
-    found_ats_keywords = [kw for kw in ATS_KEYWORDS if kw in text_lower]
-    missing_ats_keywords = [kw for kw in ATS_KEYWORDS if kw not in text_lower]
-    if len(found_ats_keywords) < len(ATS_KEYWORDS) * 0.5:
-        feedback.ats_keywords.append(f"Add these ATS-friendly keywords: {', '.join(missing_ats_keywords[:3])}")
+    # Генерация обратной связи
+    trending_tech_skills = {'python', 'javascript', 'react', 'aws', 'docker'}
+    trending_soft_skills = {'communication', 'leadership', 'problem-solving'}
+    skill_gaps = [
+        f"Missing trending technical skills: {', '.join(trending_tech_skills - skills)}" if not skills & trending_tech_skills else "",
+        f"Missing trending soft skills: {', '.join(trending_soft_skills - skills)}" if not skills & trending_soft_skills else ""
+    ]
+    feedback = {
+        'skill_gaps': [gap for gap in skill_gaps if gap],
+        'formatting': [],
+        'ats_keywords': ['Add these ATS-friendly keywords: development, software, programming'] if not skills else []
+    }
     print(f"Generated feedback: {feedback}")
 
-    recommendations = []
-    if len(skills) < 4:
-        recommendations.append("Consider adding more technical skills to stand out")
-    if experience_years < 1:
-        recommendations.append("Try to gain more professional experience or include relevant projects")
-    if education_score < 15:
-        recommendations.append("Enhance your education section with more details")
-    if len(sentences) < 5:
-        recommendations.append("Expand your resume with more detailed descriptions")
-    recommendations_text = '\n'.join(recommendations) if recommendations else "Well-structured resume!"
-    print(f"Recommendations: {recommendations_text}")
-
-    analysis = ResumeAnalysis(
-        skills=', '.join(skills) if skills else "",
-        experience=experience,
-        education=', '.join(education) if education else "Not specified",
-        rating=rating,
-        recommendations=recommendations_text,
-        feedback=feedback
-    )
-    print(f"Final analysis: {analysis.dict()}")
-    return analysis.dict()
+    # Возвращаем результат
+    try:
+        analysis = ResumeAnalysis(
+            skills=skills_str,
+            experience=experience_str,
+            education=education,
+            rating=rating,
+            feedback=feedback
+        )
+        return analysis.dict()
+    except ValidationError as e:
+        print(f"Validation error: {e}")
+        raise
 
 def process_job_description(description):
 

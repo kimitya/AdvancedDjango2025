@@ -13,8 +13,9 @@ from .utils import process_resume, process_job_description, match_resume_to_job
 from .permissions import IsRecruiter
 from drf_yasg.utils import swagger_auto_schema
 from bson import ObjectId
-
+from django.core.cache import cache
 from django.conf import settings
+import json
 
 class ResumeUploadView(generics.CreateAPIView):
     serializer_class = ResumeSerializer
@@ -38,6 +39,13 @@ class ResumeUploadView(generics.CreateAPIView):
         }
     )
     def post(self, request, *args, **kwargs):
+        existing_resume = MongoResume.objects.filter(user_id=self.request.user.id).first()
+        if existing_resume:
+            return Response(
+                {'error': 'You already have a resume. Use the replace endpoint to update it.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         uploaded_file = self.request.FILES.get('file')
         if not uploaded_file:
             return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
@@ -183,17 +191,108 @@ class JobDescriptionMatchView(generics.ListAPIView):
 
 
 class JobDescriptionListView(generics.ListAPIView):
-    queryset = JobDescription.objects.all()
     serializer_class = JobDescriptionSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return JobDescription.objects.all()
+
     def list(self, request, *args, **kwargs):
+        cache_key = 'job_description_list'
+
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            print("Returning data from cache")
+            return Response(json.loads(cached_data))
+
         queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        serializer = self.serializer_class(queryset, many=True)
+        data = serializer.data
+
+        cache.set(cache_key, json.dumps(data), timeout=60 * 15)
+        print("Data cached")
+
+        return Response(data)
 
 
 class JobDescriptionDetailView(generics.RetrieveAPIView):
     queryset = JobDescription.objects.all()
     serializer_class = JobDescriptionSerializer
     permission_classes = [IsAuthenticated]
+
+class ResumeReplaceView(generics.UpdateAPIView):
+    serializer_class = ResumeSerializer
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="Replace the existing resume with a new document",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'file': openapi.Schema(type=openapi.TYPE_FILE, description='New resume file (PDF or DOCX)')
+            },
+            required=['file']
+        ),
+        responses={
+            200: ResumeSerializer,
+            400: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={'error': openapi.Schema(type=openapi.TYPE_STRING)}
+            ),
+            404: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={'error': openapi.Schema(type=openapi.TYPE_STRING)}
+            )
+        }
+    )
+    def put(self, request, *args, **kwargs):
+        existing_resume = MongoResume.objects.filter(user_id=self.request.user.id).first()
+        if not existing_resume:
+            return Response(
+                {'error': 'No existing resume found. Please upload a resume first.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        uploaded_file = self.request.FILES.get('file')
+        if not uploaded_file:
+            return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        old_file_path = existing_resume.file.replace(settings.MEDIA_URL, '')
+        full_old_file_path = os.path.join(settings.MEDIA_ROOT, old_file_path)
+        if os.path.exists(full_old_file_path):
+            os.remove(full_old_file_path)
+
+        new_file_path = default_storage.save(f'resumes/{uploaded_file.name}', uploaded_file)
+        full_new_file_path = os.path.join(settings.MEDIA_ROOT, new_file_path)
+        new_file_url = f"{settings.MEDIA_URL}{new_file_path}"
+
+        try:
+            analysis = process_resume(full_new_file_path)
+            print(f"Analysis result: {analysis}")
+
+            existing_resume.file = new_file_url
+            existing_resume.uploaded_at = timezone.now()
+            existing_resume.skills = analysis['skills']
+            existing_resume.experience = analysis['experience']
+            existing_resume.education = analysis['education']
+            existing_resume.rating = analysis['rating']
+            existing_resume.feedback = analysis['feedback']
+            existing_resume.save()
+            print(f"Updated MongoResume: {existing_resume.id}, skills: {existing_resume.skills}")
+
+            Log.objects.using('mysql').create(
+                user_id=self.request.user.id,
+                action="Replaced resume",
+                details=f"Resume ID: {existing_resume.id}"
+            )
+
+            serializer = self.serializer_class(existing_resume)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except ValidationError as e:
+            default_storage.delete(new_file_path)
+            return Response({'error': f"AI validation failed: {str(e)}"},
+                            status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            default_storage.delete(new_file_path)
+            return Response({'error': f"Failed to process resume: {str(e)}"},
+                            status=status.HTTP_400_BAD_REQUEST)
