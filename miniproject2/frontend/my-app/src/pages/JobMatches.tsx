@@ -1,4 +1,3 @@
-// src/pages/JobMatches.tsx
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getJobMatches } from '../services/api'

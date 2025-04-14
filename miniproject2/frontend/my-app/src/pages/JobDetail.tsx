@@ -1,4 +1,4 @@
-mport { useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getJobDetail } from '../services/api'
 

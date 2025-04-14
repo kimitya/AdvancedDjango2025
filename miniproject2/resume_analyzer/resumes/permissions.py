@@ -1,4 +1,3 @@
-# resumes/permissions.py
 from rest_framework import permissions
 
 class IsRecruiter(permissions.BasePermission):

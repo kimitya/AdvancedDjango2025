@@ -1,4 +1,3 @@
-// src/pages/ResumeUpload.tsx
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { uploadResume } from '../services/api'
@@ -7,7 +6,7 @@ import toast from 'react-hot-toast'
 export default function ResumeUpload() {
   const [file, setFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [analysis, setAnalysis] = useState<any>(null) // State to store the analysis response
+  const [analysis, setAnalysis] = useState<any>(null) 
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,9 +30,8 @@ export default function ResumeUpload() {
       console.log('Uploading resume with token:', token)
       const response = await uploadResume(formData)
       console.log('Upload response:', response.data)
-      setAnalysis(response.data) // Store the analysis response
+      setAnalysis(response.data)
       toast.success('Resume successfully uploaded!')
-      // Do not navigate away so the user can see the feedback
     } catch (error: any) {
       console.error('Upload error:', error.response?.data || error.message)
       setError(

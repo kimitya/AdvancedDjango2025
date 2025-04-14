@@ -1,4 +1,3 @@
-// src/services/api.ts
 import axios from 'axios'
 
 const api = axios.create({
@@ -12,16 +11,16 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
-    console.log('Adding Authorization header with token:', token) // Debug
+    console.log('Adding Authorization header with token:', token) 
   } else {
-    console.log('No token found in localStorage') // Debug
+    console.log('No token found in localStorage') 
   }
   return config
 }, (error) => {
   return Promise.reject(error)
 })
 
-// Rest of the file remains unchanged...
+
 export const login = (credentials: { username: string; password: string }) =>
   api.post('login/', credentials)
 

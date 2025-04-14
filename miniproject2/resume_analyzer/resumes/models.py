@@ -62,3 +62,22 @@ class Log(models.Model):
 
     def __str__(self):
         return f"User {self.user_id} - {self.action} - {self.timestamp}"
+
+class MongoResumeProxy(models.Model):
+    class Meta:
+        managed = False
+        verbose_name = 'Mongo Resume'
+        verbose_name_plural = 'Mongo Resumes'
+
+    id = models.CharField(max_length=24, primary_key=True)
+    user_id = models.IntegerField()
+    file = models.CharField(max_length=255)
+    uploaded_at = models.DateTimeField()
+    skills = models.CharField(max_length=500, blank=True)
+    experience = models.CharField(max_length=100, blank=True)
+    education = models.CharField(max_length=500, blank=True)
+    rating = models.FloatField(blank=True, null=True)
+    feedback = models.JSONField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Resume {self.id} (User {self.user_id})"

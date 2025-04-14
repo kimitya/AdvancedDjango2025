@@ -1,4 +1,3 @@
-// src/pages/Home.tsx
 import { Link } from 'react-router-dom'
 
 export default function Home() {
@@ -7,7 +6,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Hero Section */}
       <section className="w-full bg-gray-50 py-16">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-800">

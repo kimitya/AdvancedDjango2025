@@ -1,4 +1,3 @@
-# resumes/utils.py
 import PyPDF2
 import docx
 import spacy
@@ -199,36 +198,37 @@ def extract_text_from_docx(file_path):
 #     return analysis.dict()
 
 class ResumeAnalysis(BaseModel):
-    skills: str  # Ожидается строка, разделённая запятыми
+    skills: str
     experience: str
     education: str
     rating: float
     feedback: dict
 
+
 def process_resume(file_path: str) -> dict:
-    # Извлечение текста из DOCX
     doc = docx.Document(file_path)
     full_text = '\n'.join([para.text for para in doc.paragraphs])
     print(f"Extracted text from DOCX: {full_text[:100]}...")
 
-    # Обработка текста
     processed_text = full_text.lower()
     print(f"Processed text: {processed_text[:100]}...")
 
-    # Извлечение навыков
     skills_section = re.search(r'skills\s*([\s\S]*?)(work experience|education|$)', processed_text, re.IGNORECASE)
+    skills = set()
     if skills_section:
         skills_text = skills_section.group(1).strip()
-        skills = {skill.strip() for skill in skills_text.split('\n') if skill.strip() and not skill.strip().startswith(('email', 'phone', 'name'))}
-    else:
-        skills = set()
+        skills = {skill.strip() for skill in skills_text.split('\n') if
+                  skill.strip() and not skill.strip().startswith(('email', 'phone', 'name'))}
 
-    # Если навыки не найдены, задаём значение по умолчанию
+        known_skills = {'python', 'javascript', 'react', 'aws', 'docker', 'figma', 'adobe creative suite',
+                        'communication', 'leadership'}
+        skills = {s for s in skills if s in known_skills or len(s) > 2}
     skills_str = ', '.join(skills) if skills else 'unknown'
     print(f"Extracted skills: {skills}")
 
-    # Извлечение опыта
-    experience_section = re.search(r'(work experience|experience)\s*([\s\S]*?)(education|$)', processed_text, re.IGNORECASE)
+
+    experience_section = re.search(r'(work experience|experience)\s*([\s\S]*?)(education|$)', processed_text,
+                                   re.IGNORECASE)
     experience_years = 0.0
     if experience_section:
         experience_text = experience_section.group(2)
@@ -239,31 +239,40 @@ def process_resume(file_path: str) -> dict:
     experience_str = f"{experience_years:.1f} years"
     print(f"Calculated experience: {experience_str}")
 
-    # Извлечение образования
+
     education_section = re.search(r'education\s*([\s\S]*?)(languages|$)', processed_text, re.IGNORECASE)
     education = education_section.group(1).strip() if education_section else 'Not specified'
     print(f"Extracted education: {education}")
 
-    # Рассчёт рейтинга
-    rating = 40 + (len(skills) * 5 if skills else 0) + (experience_years * 2)
+    rating = 20 + (len(skills) * 10 if skills else 0) + (experience_years * 5)
     rating = min(rating, 100)
     print(f"Calculated rating: {rating}")
 
-    # Генерация обратной связи
+
     trending_tech_skills = {'python', 'javascript', 'react', 'aws', 'docker'}
     trending_soft_skills = {'communication', 'leadership', 'problem-solving'}
     skill_gaps = [
         f"Missing trending technical skills: {', '.join(trending_tech_skills - skills)}" if not skills & trending_tech_skills else "",
         f"Missing trending soft skills: {', '.join(trending_soft_skills - skills)}" if not skills & trending_soft_skills else ""
     ]
+
+    formatting_tips = []
+    if len(full_text.split('\n')) < 5:
+        formatting_tips.append("Add more sections like Experience and Education for clarity.")
+    if not skills_section:
+        formatting_tips.append("Include a clear 'Skills' section.")
+
+    ats_keywords = []
+    if not skills or len(skills) < 3:
+        ats_keywords.append("Add ATS-friendly keywords: development, software, programming, teamwork.")
+
     feedback = {
         'skill_gaps': [gap for gap in skill_gaps if gap],
-        'formatting': [],
-        'ats_keywords': ['Add these ATS-friendly keywords: development, software, programming'] if not skills else []
+        'formatting': formatting_tips,
+        'ats_keywords': ats_keywords
     }
     print(f"Generated feedback: {feedback}")
 
-    # Возвращаем результат
     try:
         analysis = ResumeAnalysis(
             skills=skills_str,

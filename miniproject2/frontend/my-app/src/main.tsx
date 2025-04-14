@@ -1,4 +1,3 @@
-// src/main.tsx
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -14,7 +13,7 @@ import JobList from './pages/JobList.tsx'
 import JobDetail from './pages/JobDetail.tsx'
 import JobMatches from './pages/JobMatches.tsx'
 import './index.css'
-import { Toaster } from 'react-hot-toast' // Add this import
+import { Toaster } from 'react-hot-toast' 
 
 const queryClient = new QueryClient()
 

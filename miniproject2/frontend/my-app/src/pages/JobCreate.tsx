@@ -1,5 +1,4 @@
-// src/pages/JobCreate.tsx
-import { useState, useEffect } from 'react' // Add useEffect
+import { useState, useEffect } from 'react' 
 import { useNavigate } from 'react-router-dom'
 import { createJob } from '../services/api'
 import toast from 'react-hot-toast'
@@ -7,15 +6,8 @@ import toast from 'react-hot-toast'
 export default function JobCreate() {
   const [description, setDescription] = useState('')
   const navigate = useNavigate()
-  const userRole = localStorage.getItem('userRole') // Get the user's role
+  const userRole = localStorage.getItem('userRole') 
 
-  // Redirect job seekers
-  useEffect(() => {
-    if (userRole !== 'recruiter') {
-      toast.error('Only recruiters can create job postings.')
-      navigate('/jobs')
-    }
-  }, [userRole, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,10 +20,6 @@ export default function JobCreate() {
     }
   }
 
-  // Only render the form if the user is a recruiter
-  if (userRole !== 'recruiter') {
-    return null // The useEffect will handle the redirect
-  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">

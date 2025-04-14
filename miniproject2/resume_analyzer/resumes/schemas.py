@@ -1,4 +1,3 @@
-# resumes/schemas.py
 from pydantic import BaseModel, Field, validator
 from typing import List, Dict, Optional
 

@@ -1,4 +1,3 @@
-// src/pages/ResumeReplace.tsx
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { replaceResume } from '../services/api'
@@ -6,8 +5,8 @@ import toast from 'react-hot-toast'
 
 export default function ResumeReplace() {
   const [file, setFile] = useState<File | null>(null)
-  const [error, setError] = useState<string | null>(null) // Add error state
-  const [analysis, setAnalysis] = useState<any>(null) // State to store the analysis response
+  const [error, setError] = useState<string | null>(null)
+  const [analysis, setAnalysis] = useState<any>(null)
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,10 +28,10 @@ export default function ResumeReplace() {
 
     try {
       const response = await replaceResume(formData)
-      console.log('Replace response:', response.data) // Debug the response
-      setAnalysis(response.data) // Store the analysis response
+      console.log('Replace response:', response.data) 
+      setAnalysis(response.data) 
       toast.success('Resume successfully updated!')
-      // Do not navigate away so the user can see the feedback
+
     } catch (error: any) {
       console.error('Replace error:', error.response?.data || error.message)
       setError(

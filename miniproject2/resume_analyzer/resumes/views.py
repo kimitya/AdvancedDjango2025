@@ -1,4 +1,4 @@
-# resumes/views.py
+
 import os
 from django.utils import timezone
 from pydantic import ValidationError
@@ -128,6 +128,8 @@ class JobDescriptionCreateView(generics.CreateAPIView):
         job.required_skills = ', '.join(analysis['required_skills'])
         job.required_experience = analysis['required_experience']
         job.save()
+        cache.delete('job_description_list')
+        print("Cache cleared after job creation")
 
         Log.objects.using('mysql').create(
             user_id=self.request.user.id,
